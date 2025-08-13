@@ -97,6 +97,18 @@ export default function OrderPage() {
       const livraison = Number(fraisLivraison);
       const total = subtotal + livraison;
 
+/*
+git remote add origin https://github.com/GhislainTapsoba/E_Commerce_Frontend_ECMS.git
+3️⃣ Envoyer ton code vers GitHub
+
+bash
+Copier
+Modifier
+git branch -M main
+git push -u origin main
+
+*/
+
       const payload: PayloadCommandeFrontend = {
         customer: {
           name: formData.nom_client,
