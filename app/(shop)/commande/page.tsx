@@ -23,37 +23,66 @@ export default function OrderPage() {
     if (items.length === 0) router.push("/panier");
   }, [items.length, router]);
 
+  // --- Vérification et décrémentation du stock Strapi v5 ---
   const checkAndDecrementStock = async (items: PayloadCommandeFrontend["items"]) => {
+    const STRAPI_BASE_URL = process.env.NEXT_PUBLIC_STRAPI_URL;
+    const STRAPI_TOKEN = process.env.NEXT_PUBLIC_STRAPI_TOKEN;
+    if (!STRAPI_BASE_URL || !STRAPI_TOKEN) throw new Error("Configuration Strapi manquante");
+
+    const ruptures: string[] = [];
+    const productsToUpdate: { id: number; newStock: number }[] = [];
+
     for (const item of items) {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/produits/${item.product_id}`, {
-        headers: {
-          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-      });
+      // Fetch en incluant explicitement quantite_stock
+      const res = await fetch(
+        `${STRAPI_BASE_URL}/api/produits?filters[id][$eq]=${item.product_id}&fields=quantite_stock,nom`,
+        {
+          headers: {
+            Authorization: `Bearer ${STRAPI_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      if (!res.ok) throw new Error(`Erreur Strapi pour le produit ${item.product_name}`);
-
-      const productData = await res.json();
-      const currentStock = Number(productData.data.attributes.stock);
-
-      if (item.quantity > currentStock) {
-        throw new Error(`Stock insuffisant pour ${item.product_name} (stock restant: ${currentStock})`);
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(`Erreur Strapi pour "${item.product_name}" (status ${res.status}): ${text}`);
       }
 
-      await fetch(`${process.env.NEXT_PUBLIC_STRAPI_URL}/api/produits/${item.product_id}`, {
-        method: "PUT",
+      const data = await res.json();
+      const product = data.data?.[0];
+      if (!product) {
+        throw new Error(`Produit "${item.product_name}" introuvable`);
+      }
+
+      const stock = Number(product.attributes?.quantite_stock ?? 0);
+      console.log(`Produit "${item.product_name}" stock réel:`, stock);
+
+      if (item.quantity > stock) {
+        ruptures.push(`${item.product_name} (dispo: ${stock})`);
+      } else {
+        productsToUpdate.push({ id: product.id, newStock: stock - item.quantity });
+      }
+    }
+
+    if (ruptures.length > 0) {
+      throw new Error(`Stock insuffisant pour : ${ruptures.join(", ")}`);
+    }
+
+    // Décrémentation des stocks
+    for (const p of productsToUpdate) {
+      await fetch(`${STRAPI_BASE_URL}/api/produits/${p.id}`, {
+        method: "PATCH",
         headers: {
-          Authorization: `Bearer ${process.env.STRAPI_API_TOKEN}`,
+          Authorization: `Bearer ${STRAPI_TOKEN}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          data: { stock: currentStock - item.quantity },
-        }),
+        body: JSON.stringify({ data: { quantite_stock: p.newStock } }),
       });
     }
   };
 
+  // --- Soumission de commande ---
   const handleOrderSubmit = async (formData: {
     nom_client: string;
     telephone: string;
@@ -75,39 +104,32 @@ export default function OrderPage() {
     setIsSubmitting(true);
 
     try {
-      // ✅ Conversion numérique stricte
       const itemsPayload = items.map(item => {
-        const prix = Number(item.prix ?? 0);
-        const ajustement = Number(item.variant?.price_adjustment ?? 0);
-        const quantity = Number(item.quantite ?? 0);
+        const prixBase = parseFloat(String(item.prix || 0));
+        const ajustementVariante = parseFloat(String(item.variant?.price_adjustment || 0));
+        const quantite = parseInt(String(item.quantite || 0), 10);
 
-        const unitPrice = prix + ajustement;          // addition numérique
-        const totalPrice = unitPrice * quantity;      // multiplication numérique
+        if (isNaN(prixBase) || isNaN(ajustementVariante) || isNaN(quantite)) {
+          throw new Error(`Données invalides pour le produit "${item.nom}"`);
+        }
+
+        const prixUnitaire = prixBase + ajustementVariante;
+        const prixTotal = prixUnitaire * quantite;
 
         return {
           product_id: Number(item.id),
           product_name: item.nom,
-          unit_price: unitPrice,
-          quantity,
-          total_price: totalPrice,
+          unit_price: Math.round(prixUnitaire * 100) / 100,
+          quantity: quantite,
+          total_price: Math.round(prixTotal * 100) / 100,
         };
       });
 
-      const subtotal = itemsPayload.reduce((acc, item) => acc + item.total_price, 0);
-      const livraison = Number(fraisLivraison);
-      const total = subtotal + livraison;
+      const sousTotal = itemsPayload.reduce((acc, item) => acc + item.total_price, 0);
+      const fraisLivraisonNum = parseFloat(String(fraisLivraison || 0));
+      if (isNaN(fraisLivraisonNum)) throw new Error("Frais de livraison invalides");
 
-/*
-git remote add origin https://github.com/GhislainTapsoba/E_Commerce_Frontend_ECMS.git
-3️⃣ Envoyer ton code vers GitHub
-
-bash
-Copier
-Modifier
-git branch -M main
-git push -u origin main
-
-*/
+      const totalFinal = sousTotal + fraisLivraisonNum;
 
       const payload: PayloadCommandeFrontend = {
         customer: {
@@ -116,18 +138,20 @@ git push -u origin main
           email: formData.email?.trim() || undefined,
           address: formData.adresse,
         },
-        delivery_zone_id: zoneSelectionneeId!,
+        delivery_zone_id: zoneSelectionneeId,
         items: itemsPayload,
-        subtotal,
-        delivery_fee: livraison,
-        total,
+        subtotal: Math.round(sousTotal * 100) / 100,
+        delivery_fee: Math.round(fraisLivraisonNum * 100) / 100,
+        total: Math.round(totalFinal * 100) / 100,
         remarks: formData.remarques || "",
       };
 
-      console.log("Payload à envoyer :", payload);
+      console.log("Payload final :", payload);
 
+      // Vérification et décrémentation du stock
       await checkAndDecrementStock(payload.items);
 
+      // Création de la commande dans Laravel
       const nouvelleCommande: ReponseCommandeLaravel = await creerCommande(payload);
 
       clearCart();
@@ -142,7 +166,7 @@ git push -u origin main
       console.error("Erreur création commande :", error);
       toast({
         title: "Erreur",
-        description: error.message || "Erreur inconnue",
+        description: error.message || "Une erreur est survenue lors de la création de la commande",
         variant: "destructive",
       });
     } finally {

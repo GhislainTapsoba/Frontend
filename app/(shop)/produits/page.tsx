@@ -2,7 +2,7 @@ import { getProduits, getCategories } from "@/lib/api/strapi";
 import { ProductGrid } from "@/components/product/ProductGrid";
 import { ProductFilters } from "@/components/product/ProductFilters";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-import { type Produit } from "@/types/strapi";
+import { type Produit, type Categorie } from "@/types/strapi";
 
 interface ProductsPageProps {
   searchParams: {
@@ -17,7 +17,7 @@ export default async function ProductsPage({ searchParams }: ProductsPageProps) 
   const searchTerm = params.search ?? "";
 
   // 🔹 Récupération des catégories (côté serveur)
-  const categories = await getCategories();
+  const categories: Categorie[] = await getCategories();
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -53,9 +53,9 @@ interface FilteredProductListProps {
 }
 
 async function FilteredProductList({ selectedCategorySlug, searchTerm }: FilteredProductListProps) {
-  // 🔹 Filtrage correct Strapi v5
+  // 🔹 Filtrage Strapi v5 côté serveur
   const filters: Record<string, any> = {
-    statut: { $eq: "actif" }, // filtre par statut actif
+    actif: { $eq: "actif" },
   };
 
   if (selectedCategorySlug !== "all") {
@@ -63,7 +63,12 @@ async function FilteredProductList({ selectedCategorySlug, searchTerm }: Filtere
   }
 
   if (searchTerm) {
-    filters.nom = { $containsi: searchTerm };
+    filters.$or = [
+      { nom: { $containsi: searchTerm } },
+      { description: { $containsi: searchTerm } },
+      { description_courte: { $containsi: searchTerm } },
+      { mots_cles: { $containsi: searchTerm } },
+    ];
   }
 
   let produits: Produit[] = [];

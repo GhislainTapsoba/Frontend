@@ -10,10 +10,17 @@ export function Header() {
       <div className="container mx-auto px-4 py-4 flex items-center justify-between">
         <Link
           href="/"
-          className="text-2xl font-bold text-gray-800 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-600 rounded"
+          className="flex items-center space-x-2 text-gray-800 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-600 rounded"
           aria-label={`Accueil - ${appName}`}
         >
-          {appName}
+          {/* Logo */}
+          <img
+            src="/images/logo.png" // Chemin vers ton logo
+            alt={`${appName} logo`}
+            className="h-8 w-8 sm:h-10 sm:w-10 object-contain"
+          />
+          {/* Nom de l'application */}
+          <span className="text-2xl font-bold">{appName}</span>
         </Link>
 
         <nav className="hidden md:flex space-x-6" aria-label="Menu principal">

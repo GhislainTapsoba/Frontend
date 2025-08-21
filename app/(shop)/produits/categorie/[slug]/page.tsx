@@ -1,29 +1,28 @@
-import { getCategorieBySlug } from "@/lib/api/strapi";
-import { ProductGrid } from "@/components/product/ProductGrid";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
-import { type Produit } from "@/types/strapi";
+import { ProductGrid } from "@/components/product/ProductGrid";
+import { getCategorieBySlug } from "@/lib/api/strapi";
+import { type Categorie, type Produit } from "@/types/strapi";
 
 interface CategoryProductsPageProps {
-  params: {
-    slug: string;
-  };
+  params: { slug: string };
 }
 
 export default async function CategoryProductsPage({ params }: CategoryProductsPageProps) {
-  const categorie = await getCategorieBySlug(params.slug);
+  // Récupération de la catégorie avec populate complet
+  const categorie: Categorie | null = await getCategorieBySlug(params.slug);
 
   if (!categorie) {
     notFound();
   }
 
-  // produits liés à la catégorie, s’ils existent
+  // Produits liés à la catégorie
   const produits: Produit[] = categorie.produits ?? [];
 
-  // ne garder que les produits actifs
-  const produitsActifs = produits.filter(p => p.statut === 'actif');
+  // Ne garder que les produits actifs
+  const produitsActifs = produits.filter(p => p.statut === "actif");
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -35,7 +34,9 @@ export default async function CategoryProductsPage({ params }: CategoryProductsP
         <Suspense fallback={<LoadingSpinner />}>
           {produitsActifs.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-xl text-gray-600">Aucun produit actif dans cette catégorie pour le moment.</p>
+              <p className="text-xl text-gray-600">
+                Aucun produit actif dans cette catégorie pour le moment.
+              </p>
             </div>
           ) : (
             <ProductGrid produits={produitsActifs} />
