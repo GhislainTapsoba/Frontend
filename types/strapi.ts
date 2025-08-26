@@ -86,6 +86,7 @@ export type Section = SectionTexte | SectionImage | SectionGalerie | SectionCont
 
 export interface Categorie {
   id: number;
+  documentId?: string;
   nom: string;
   slug: string;
   description?: string;

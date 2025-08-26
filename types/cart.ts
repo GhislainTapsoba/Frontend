@@ -5,6 +5,7 @@ import { type Produit } from "./strapi";
  */
 export interface ArticlePanier {
   id: number;             // Identifiant unique du produit
+  documentId?: string;    // UUID Strapi v5
   nom: string;            // Nom du produit
   prix: number;           // Prix unitaire de base du produit (sans ajustement de variante)
   quantite: number;       // Quantité sélectionnée pour cet article

@@ -4,6 +4,8 @@ import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { getZonesLivraison } from "@/lib/api/laravel"; // ton fichier Laravel API
 import { ZoneLivraison } from "@/types/laravel";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export const metadata = {
   title: "Zones de livraison",
@@ -66,12 +68,14 @@ async function ZoneList() {
             </p>
           </div>
 
-          <a
-            href={`/commander?zone=${zone.id}`}
-            className="inline-block text-center bg-blue-600 text-white font-semibold px-6 py-3 rounded-full hover:bg-blue-700 transition-colors mt-4"
-          >
-            Commander
-          </a>
+          <Link href="/commande">
+            <Button
+              size="lg"
+              className="w-full bg-green-600 hover:bg-green-700 mt-4"
+            >
+              Commander
+            </Button>
+          </Link>
         </div>
       ))}
     </div>

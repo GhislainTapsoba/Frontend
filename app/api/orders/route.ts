@@ -1,7 +1,27 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { creerCommande } from "@/lib/api/laravel";
-import type { PayloadCommande } from "@/types/laravel";
+import type { PayloadCommandeFrontend } from "@/types/laravel";
+
+// Type for the incoming request payload
+interface PayloadCommande {
+  nom_client: string;
+  telephone: string;
+  adresse: string;
+  ville: string;
+  code_postal: string;
+  zone_livraison_id: number;
+  remarques?: string;
+  total: number;
+  frais_livraison: number;
+  ligne_commandes: Array<{
+    product_id: number;
+    quantite: number;
+    prixUnitaire: number;
+    nom_produit?: string;
+  }>;
+  payment_method?: 'cash' | 'card' | 'transfer';
+}
 
 const CommandeSchema = z.object({
   nom_client: z.string().min(2),
@@ -40,15 +60,37 @@ export async function POST(request: Request) {
 
     console.log(`Commande reçue pour client : ${payload.nom_client}`);
 
-    const nouvelleCommande = await creerCommande(payload);
+    // Transform to Laravel API format
+    const laravelPayload: PayloadCommandeFrontend = {
+      customer: {
+        name: payload.nom_client,
+        phone: payload.telephone,
+        address: `${payload.adresse}, ${payload.ville} ${payload.code_postal}`
+      },
+      delivery_zone_id: payload.zone_livraison_id,
+      items: payload.ligne_commandes.map(item => ({
+        product_id: item.product_id,
+        product_name: item.nom_produit || '',
+        unit_price: item.prixUnitaire,
+        quantity: item.quantite,
+        total_price: item.prixUnitaire * item.quantite
+      })),
+      subtotal: payload.total - payload.frais_livraison,
+      delivery_fee: payload.frais_livraison,
+      total: payload.total,
+      remarks: payload.remarques
+    };
+
+    const nouvelleCommande = await creerCommande(laravelPayload);
 
     return NextResponse.json(
       {
         success: true,
         data: {
-          id: nouvelleCommande.id,
-          numero: nouvelleCommande.numero_commande,
-          date: nouvelleCommande.created_at,
+          id: nouvelleCommande.order_id,
+          numero: nouvelleCommande.order_number,
+          status: nouvelleCommande.status,
+          total: nouvelleCommande.total
         }
       },
       {

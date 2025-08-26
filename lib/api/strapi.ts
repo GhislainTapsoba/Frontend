@@ -11,18 +11,15 @@ import {
 import { getEnv } from "@/lib/env";
 
 // ========== CONFIGURATION STRAPI ==========
-const STRAPI_URL = "http://localhost:1337";
-
-
 export const STRAPI_API_URL = getEnv("NEXT_PUBLIC_STRAPI_API_URL", "http://localhost:1337/api");
 export const STRAPI_TOKEN = getEnv("NEXT_PUBLIC_STRAPI_TOKEN", "");
 export const STRAPI_BASE_URL = getEnv("NEXT_PUBLIC_STRAPI_URL", "http://localhost:1337");
 
 // ========== TYPES STRAPI ==========
-
 interface ElementDonneeStrapi<T> {
   id: number;
-  attributes: T;
+  documentId?: string; // Strapi v5
+  attributes?: T; // Strapi v4
 }
 
 interface ReponseStrapi<T> {
@@ -44,7 +41,6 @@ interface StrapiResponse<T> {
 }
 
 // ========== UTILITAIRES JSON ==========
-
 export function toJSON<T>(data: T, indent = 2): string {
   try {
     return JSON.stringify(data, null, indent);
@@ -82,10 +78,13 @@ export function downloadAsJSON<T>(data: T, filename = "strapi-data.json"): void 
   }
 }
 
-// ========== FETCH PRINCIPAL STRAPI ==========
-
+// ========== FETCH PRINCIPAL STRAPI CORRIGÉ ==========
 async function fetchStrapi<T>(path: string, params?: Record<string, any>): Promise<StrapiResponse<T>> {
-  const query = qs.stringify(params, { encodeValuesOnly: true, arrayFormat: "brackets" });
+  const query = qs.stringify(params, { 
+    encodeValuesOnly: true, 
+    arrayFormat: "brackets",
+    indices: false // Important pour éviter les erreurs 400
+  });
   const url = `${STRAPI_API_URL}${path}${query ? `?${query}` : ""}`;
 
   if (process.env.NODE_ENV === "development") {
@@ -93,34 +92,50 @@ async function fetchStrapi<T>(path: string, params?: Record<string, any>): Promi
   }
 
   try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // N'ajouter l'Authorization que si le token existe
+    if (STRAPI_TOKEN) {
+      headers.Authorization = `Bearer ${STRAPI_TOKEN}`;
+    }
+
     const res = await fetch(url, {
-      headers: {
-        ...(STRAPI_TOKEN && { Authorization: `Bearer ${STRAPI_TOKEN}` }),
-        "Content-Type": "application/json",
-      },
+      headers,
       next: { revalidate: 60 },
     });
 
     if (!res.ok) {
-    const errorData = await res.json().catch(() => ({ error: "Erreur lors du parsing de l'erreur" }));
-    console.error(`❌ Strapi API Error for ${path}:`, errorData);
-    console.error("❌ URL appelée:", url); // <-- AJOUTE CETTE LIGNE
-    throw new Error(`Erreur lors de la récupération des données Strapi: ${res.status} ${res.statusText}`);
-  }
-
+      const errorData = await res.json().catch(() => ({ error: "Erreur lors du parsing de l'erreur" }));
+      console.error(`❌ Strapi API Error for ${path}:`, errorData);
+      console.error("❌ URL appelée:", url);
+      console.error("❌ Status:", res.status, res.statusText);
+      throw new Error(`Erreur lors de la récupération des données Strapi: ${res.status} ${res.statusText}`);
+    }
 
     const rawResponse: ReponseStrapi<ElementDonneeStrapi<T>[]> = await res.json();
-    console.log("🔥 Réponse brute Strapi:", rawResponse);
-    console.log("🔥 Donnée 0 brute:", rawResponse.data[0]);
-    const objects = rawResponse.data.map((item) => {
-      if ("attributes" in item) {
-        return { id: item.id, ...item.attributes } as T; // Strapi v4
+    
+    if (process.env.NODE_ENV === "development") {
+      console.log("🔥 Réponse brute Strapi:", rawResponse);
+      if (rawResponse.data && Array.isArray(rawResponse.data) && rawResponse.data.length > 0) {
+        console.log("🔥 Donnée 0 brute:", rawResponse.data[0]);
       }
-      return item as T; // Strapi v5
+    }
+
+    const objects = rawResponse.data.map((item) => {
+      if (item && typeof item === 'object') {
+        // Strapi v4 avec attributes
+        if ("attributes" in item && item.attributes) {
+          return { id: item.id, documentId: item.documentId, ...item.attributes } as T;
+        }
+        // Strapi v5 sans attributes
+        return item as T;
+      }
+      return item as T;
     });
 
     const json = toJSON(rawResponse);
-
     return { objects, rawResponse, json };
   } catch (error) {
     console.error(`❌ Erreur fetch Strapi sur ${path}:`, error);
@@ -129,7 +144,6 @@ async function fetchStrapi<T>(path: string, params?: Record<string, any>): Promi
 }
 
 // ========== FONCTIONS PRODUITS ==========
-
 const defaultPopulate = {
   images: true,
   image_principale: true,
@@ -148,8 +162,10 @@ interface GetProduitsParams {
 
 export async function getProduits(params?: GetProduitsParams): Promise<Produit[]> {
   try {
+    // Toujours filtrer sur statut = "actif"
+    const filters = { ...(params?.filters ?? {}), statut: { $eq: "actif" } };
     const query = {
-      filters: params?.filters,
+      filters,
       sort: params?.sort,
       populate: params?.populate ?? defaultPopulate,
       pagination: params?.pagination ?? defaultPagination,
@@ -184,7 +200,6 @@ export async function getProduitById(id: number): Promise<Produit | null> {
   try {
     const query = { populate: defaultPopulate };
     const { objects } = await fetchStrapi<Produit>(`/produits/${id}`, query);
-    // /produits/:id retourne directement l'objet produit, donc on renvoie le premier
     return objects?.[0] ?? null;
   } catch (error) {
     console.error("Erreur getProduitById:", error);
@@ -248,12 +263,12 @@ export async function searchProduits(searchTerm: string): Promise<Produit[]> {
 }
 
 // ========== FONCTIONS CATÉGORIES CORRIGÉES ==========
-
 export async function getCategories(): Promise<Categorie[]> {
   try {
     const query = {
       filters: { 
-        publishedAt: { $notNull: true } 
+        publishedAt: { $notNull: true },
+        actif: { $eq: true }
       },
       populate: { 
         image: true, 
@@ -271,84 +286,95 @@ export async function getCategories(): Promise<Categorie[]> {
   }
 }
 
+// ========== FONCTION getCategorieBySlug SIMPLIFIÉE ==========
 export async function getCategorieBySlug(slug: string): Promise<Categorie | null> {
   console.log(`🔍 Recherche catégorie par slug: ${slug}`);
   
   try {
-    const baseQuery = {
-      filters: { slug: { $eq: slug }, actif: { $eq: true } },
-      pagination: { pageSize: 1 },
-    };
-
-    // 1️⃣ Requête de base sans populate
-    console.log('📝 Test 1: Requête de base sans populate');
-    const baseResult = await fetchStrapi<Categorie>("/categories", baseQuery);
-    if (!baseResult.objects || baseResult.objects.length === 0) {
-      console.log('⚠️ Aucune catégorie trouvée avec ce slug');
-      return null;
-    }
-    console.log('✅ Catégorie de base trouvée');
-
-    // 2️⃣ Requête avec populate simplifié
-    console.log('📝 Test 2: Populate simplifié');
-    const simplePopulateQuery = {
-      ...baseQuery,
-      populate: { image: true, categorie_parente: true },
-    };
-    const simpleResult = await fetchStrapi<Categorie>("/categories", simplePopulateQuery);
-
-    // 3️⃣ Populate complet (produits + sous-catégories)
-    console.log('📝 Test 3: Populate complet');
-    const fullQuery = {
-      ...baseQuery,
+    // Étape 1: Récupérer la catégorie de base
+    const categorieQuery = {
+      filters: { 
+        slug: { $eq: slug }
+      },
       populate: {
         image: true,
         categorie_parente: true,
         sous_categories: {
-          filters: { actif: { $eq: true } },
-          sort: ["ordre_affichage:asc"],
-        },
-        produits: {
-          filters: { statut: { $eq: "actif" } },
-          populate: { images: true, image_principale: true },
-          sort: ["ordre_affichage:asc"],
-          pagination: { pageSize: 20 },
-        },
+          sort: ["ordre_affichage:asc"]
+        }
       },
+      pagination: { pageSize: 1 }
     };
 
-    const { objects } = await fetchStrapi<Categorie>("/categories", fullQuery);
-    console.log('✅ Données complètes récupérées');
-    return objects?.[0] ?? null;
+    const { objects: categories } = await fetchStrapi<Categorie>("/categories", categorieQuery);
+    
+    if (!categories || categories.length === 0) {
+      console.log('⚠️ Aucune catégorie trouvée avec ce slug');
+      return null;
+    }
+
+    const categorie = categories[0];
+    console.log(`✅ Catégorie trouvée: ${categorie.nom}`);
+
+    return categorie;
 
   } catch (error) {
     console.error("❌ Erreur getCategorieBySlug:", error);
-
+    
     // Fallback ultra-simple
     try {
-      console.log('🔄 Tentative de fallback ultra-simple...');
-      const fallbackQuery = { filters: { slug: { $eq: slug } }, pagination: { pageSize: 1 } };
+      console.log('🔄 Tentative de fallback...');
+      const fallbackQuery = { 
+        filters: { slug: { $eq: slug } }, 
+        pagination: { pageSize: 1 } 
+      };
       const { objects } = await fetchStrapi<Categorie>("/categories", fallbackQuery);
       return objects?.[0] ?? null;
     } catch (fallbackError) {
-      console.error('❌ Même le fallback a échoué:', fallbackError);
+      console.error('❌ Fallback échoué:', fallbackError);
       return null;
     }
   }
 }
 
+// ========== FONCTION POUR RÉCUPÉRER LES PRODUITS D'UNE CATÉGORIE ==========
+export async function getProduitsParCategorie(categorieDocumentId: string): Promise<Produit[]> {
+  try {
+    const query = {
+      filters: {
+        categories: {
+          documentId: { $eq: categorieDocumentId }
+        },
+        statut: { $eq: "actif" }
+      },
+      populate: {
+        images: true,
+        image_principale: true,
+        categories: true
+      },
+      sort: ["ordre_affichage:asc"],
+      pagination: { pageSize: 20 }
+    };
+
+    const { objects } = await fetchStrapi<Produit>("/produits", query);
+    console.log(`📦 Produits trouvés pour la catégorie ${categorieDocumentId}:`, objects?.length || 0);
+    return objects ?? [];
+
+  } catch (error) {
+    console.error(`❌ Erreur getProduitsParCategorie pour catégorie ${categorieDocumentId}:`, error);
+    return [];
+  }
+}
 
 export async function getCategoriesParentes(): Promise<Categorie[]> {
   try {
     const query = {
       filters: { 
-        actif: { $eq: "actif" }, 
         categorie_parente: { $null: true } 
       },
       populate: { 
         image: true, 
         sous_categories: { 
-          filters: { actif: { $eq: "actif" } }, 
           sort: ["ordre_affichage:asc"] 
         } 
       },
@@ -364,22 +390,25 @@ export async function getCategoriesParentes(): Promise<Categorie[]> {
 }
 
 // ========== FONCTIONS BANNIÈRES ==========
-
 export async function getBannieresActives(position?: string): Promise<Banniere[]> {
-  const now = new Date().toISOString();
-  const query = {
-    filters: {
-      actif: { $eq: true },
-      $or: [{ date_debut: { $null: true } }, { date_debut: { $lte: now } }],
-      $and: [{ $or: [{ date_fin: { $null: true } }, { date_fin: { $gte: now } }] }],
-      ...(position && { position: { $eq: position } }),
-    },
-    populate: ["image"],
-    sort: ["ordre_affichage:asc"],
-    pagination: { pageSize: 10 },
-  };
-  const { objects } = await fetchStrapi<Banniere>("/bannieres", query);
-  return objects;
+  try {
+    const now = new Date().toISOString();
+    const query = {
+      filters: {
+        $or: [{ date_debut: { $null: true } }, { date_debut: { $lte: now } }],
+        $and: [{ $or: [{ date_fin: { $null: true } }, { date_fin: { $gte: now } }] }],
+        ...(position && { position: { $eq: position } }),
+      },
+      populate: ["image"],
+      sort: ["ordre_affichage:asc"],
+      pagination: { pageSize: 10 },
+    };
+    const { objects } = await fetchStrapi<Banniere>("/bannieres", query);
+    return objects ?? [];
+  } catch (error) {
+    console.error("Erreur getBannieresActives:", error);
+    return [];
+  }
 }
 
 export async function getBannieresAccueil(): Promise<Banniere[]> {
@@ -387,8 +416,6 @@ export async function getBannieresAccueil(): Promise<Banniere[]> {
 }
 
 // ========== MEDIA URL ==========
-
-
 export function getStrapiMediaUrl(url?: string): string {
   if (!url) return "";
   return url.startsWith("http") ? url : `${STRAPI_BASE_URL}${url}`;
@@ -399,7 +426,6 @@ export function formatMedia(media: Media): Media {
 }
 
 // ========== UTILITAIRES LOCALSTORAGE ==========
-
 export function saveToLocalStorage(key: string, data: unknown): void {
   if (typeof window === "undefined") return;
 
@@ -423,92 +449,12 @@ export function loadFromLocalStorage<T>(key: string): T | null {
   }
 }
 
-// Version debug pour diagnostiquer le problème
-
+// ========== FONCTION PAGE SIMPLIFIÉE ==========
 export async function getPageBySlug(slug: string): Promise<Page | null> {
   console.log(`🔍 Recherche page par slug: ${slug}`);
   
   try {
-    // ÉTAPE 1: Vérifier toutes les pages disponibles
-    console.log('📋 ÉTAPE 1: Récupération de toutes les pages disponibles');
-    const allPagesQuery = {
-      pagination: { pageSize: 100 }
-    };
-    
-    const allPagesResult = await fetchStrapi<Page>("/pages", allPagesQuery);
-    console.log('📊 Nombre total de pages:', allPagesResult.objects?.length ?? 0);
-    
-    if (allPagesResult.objects && allPagesResult.objects.length > 0) {
-      console.log('📄 Pages trouvées:');
-      allPagesResult.objects.forEach((page, index) => {
-        console.log(`  ${index + 1}. ID: ${page.id}, Titre: ${page.titre}, Slug: ${page.slug || 'PAS DE SLUG'}`);
-      });
-    }
-    
-    // ÉTAPE 2: Vérifier les pages publiées
-    console.log('📋 ÉTAPE 2: Pages publiées seulement');
-    const publishedQuery = {
-      filters: { 
-        publishedAt: { $notNull: true }
-      },
-      pagination: { pageSize: 100 }
-    };
-    
-    const publishedResult = await fetchStrapi<Page>("/pages", publishedQuery);
-    console.log('📊 Pages publiées:', publishedResult.objects?.length ?? 0);
-    
-    if (publishedResult.objects && publishedResult.objects.length > 0) {
-      console.log('📄 Pages publiées:');
-      publishedResult.objects.forEach((page, index) => {
-        console.log(`  ${index + 1}. Slug: ${page.slug || 'PAS DE SLUG'}, Titre: ${page.titre}`);
-      });
-    }
-    
-    // ÉTAPE 3: Recherche exacte du slug
-    console.log(`📋 ÉTAPE 3: Recherche exacte du slug: "${slug}"`);
-    const exactQuery = {
-      filters: { 
-        slug: { $eq: slug }
-      },
-      pagination: { pageSize: 1 }
-    };
-    
-    const exactResult = await fetchStrapi<Page>("/pages", exactQuery);
-    console.log('📊 Pages avec ce slug exact:', exactResult.objects?.length ?? 0);
-    
-    // ÉTAPE 4: Recherche partielle du slug
-    console.log(`📋 ÉTAPE 4: Recherche partielle du slug contenant: "${slug}"`);
-    const partialQuery = {
-      filters: { 
-        slug: { $containsi: slug }
-      },
-      pagination: { pageSize: 10 }
-    };
-    
-    const partialResult = await fetchStrapi<Page>("/pages", partialQuery);
-    console.log('📊 Pages avec slug similaire:', partialResult.objects?.length ?? 0);
-    
-    if (partialResult.objects && partialResult.objects.length > 0) {
-      console.log('📄 Pages avec slug similaire:');
-      partialResult.objects.forEach((page, index) => {
-        console.log(`  ${index + 1}. Slug: "${page.slug}", Titre: ${page.titre}`);
-      });
-    }
-    
-    // ÉTAPE 5: Si rien n'est trouvé, essayer sans filtres
-    if (!exactResult.objects || exactResult.objects.length === 0) {
-      console.log('⚠️ Aucune page trouvée avec ce slug. Vérifications:');
-      console.log('1. La page existe-t-elle dans Strapi ?');
-      console.log('2. Est-elle publiée (publishedAt non null) ?');
-      console.log('3. Le slug est-il exactement:', `"${slug}"`);
-      console.log('4. Les permissions permettent-elles l\'accès ?');
-      
-      return null;
-    }
-    
-    // Si trouvé, essayer avec populate
-    console.log('✅ Page trouvée, tentative avec populate...');
-    const finalQuery = {
+    const query = {
       filters: { 
         slug: { $eq: slug },
         publishedAt: { $notNull: true }
@@ -517,14 +463,15 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
       pagination: { pageSize: 1 }
     };
     
-    const finalResult = await fetchStrapi<Page>("/pages", finalQuery);
-    const page = finalResult.objects?.[0] ?? null;
+    const { objects } = await fetchStrapi<Page>("/pages", query);
     
-    if (page) {
-      console.log(`✅ Page complète récupérée: ${page.titre}`);
+    if (objects && objects.length > 0) {
+      console.log(`✅ Page trouvée: ${objects[0].titre}`);
+      return objects[0];
     }
     
-    return page;
+    console.log(`⚠️ Aucune page trouvée avec le slug: ${slug}`);
+    return null;
     
   } catch (error) {
     console.error(`❌ Erreur getPageBySlug pour ${slug}:`, error);
@@ -532,7 +479,7 @@ export async function getPageBySlug(slug: string): Promise<Page | null> {
   }
 }
 
-// Fonction utilitaire pour lister toutes les pages (à des fins de debug)
+// Fonction utilitaire pour lister toutes les pages (debug)
 export async function debugListAllPages(): Promise<void> {
   console.log('🔍 DEBUG: Liste complète des pages dans Strapi');
   
@@ -554,10 +501,6 @@ export async function debugListAllPages(): Promise<void> {
       );
     } else {
       console.log('❌ Aucune page trouvée dans Strapi !');
-      console.log('Vérifiez:');
-      console.log('1. Que le Content Type "pages" existe');
-      console.log('2. Que des pages ont été créées');
-      console.log('3. Les permissions d\'accès');
     }
   } catch (error) {
     console.error('❌ Erreur lors du debug:', error);

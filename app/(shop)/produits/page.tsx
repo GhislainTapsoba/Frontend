@@ -55,7 +55,7 @@ interface FilteredProductListProps {
 async function FilteredProductList({ selectedCategorySlug, searchTerm }: FilteredProductListProps) {
   // 🔹 Filtrage Strapi v5 côté serveur
   const filters: Record<string, any> = {
-    actif: { $eq: "actif" },
+  // ...le filtre 'actif' est supprimé, car il n'existe pas sur Produit
   };
 
   if (selectedCategorySlug !== "all") {

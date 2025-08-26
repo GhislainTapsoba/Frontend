@@ -33,7 +33,7 @@ export default function RootLayout({
         >
           <div
             className="min-h-screen bg-fixed bg-cover bg-center"
-            style={{ backgroundImage: 'url("/images/background.png")' }}
+            style={{ backgroundImage: 'url("/images/Naruto.jpg")' }}
           >
             <Header />
             <main className="container mx-auto px-4 py-8 min-h-[calc(100vh-160px)]">

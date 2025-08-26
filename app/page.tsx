@@ -27,7 +27,7 @@ export default async function HomePage() {
       <section className="relative bg-gradient-to-r from-purple-600 to-pink-600 text-white py-24 px-6 rounded-lg shadow-lg overflow-hidden">
         <div
           className="absolute inset-0 opacity-20 bg-cover bg-center"
-          style={{ backgroundImage: 'url("/background.jpg?height=800&width=1200")' }}
+          style={{ backgroundImage: 'url("/images/Gojo.jpg?height=800&width=1200")' }}
           aria-hidden="true"
         />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
