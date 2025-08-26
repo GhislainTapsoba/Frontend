@@ -338,11 +338,13 @@ export async function getCategorieBySlug(slug: string): Promise<Categorie | null
 }
 
 // ========== FONCTION POUR RÉCUPÉRER LES PRODUITS D'UNE CATÉGORIE ==========
+// ========== FONCTION POUR RÉCUPÉRER LES PRODUITS D'UNE CATÉGORIE CORRIGÉE ==========
 export async function getProduitsParCategorie(categorieDocumentId: string): Promise<Produit[]> {
   try {
+    // Option 1: Syntaxe corrigée pour les relations avec documentId
     const query = {
       filters: {
-        categories: {
+        categories: { 
           documentId: { $eq: categorieDocumentId }
         },
         statut: { $eq: "actif" }
@@ -356,13 +358,91 @@ export async function getProduitsParCategorie(categorieDocumentId: string): Prom
       pagination: { pageSize: 20 }
     };
 
-    const { objects } = await fetchStrapi<Produit>("/produits", query);
+    console.log('🔍 Tentative avec documentId...');
+    let { objects } = await fetchStrapi<Produit>("/produits", query);
+    
+    // Si ça ne marche pas, essayer avec l'ID numérique
+    if (!objects || objects.length === 0) {
+      console.log('⚠️ Aucun produit trouvé avec documentId, tentative avec ID numérique...');
+      
+      // D'abord, récupérer la catégorie pour obtenir son ID numérique
+      const categorieQuery = {
+        filters: { documentId: { $eq: categorieDocumentId } },
+        pagination: { pageSize: 1 }
+      };
+      
+      const { objects: categories } = await fetchStrapi<Categorie>("/categories", categorieQuery);
+      
+      if (categories && categories.length > 0) {
+        const categorieId = categories[0].id;
+        console.log(`🔄 Retry avec ID numérique: ${categorieId}`);
+        
+        // Option 2: Utiliser l'ID numérique
+        const queryWithId = {
+          filters: {
+            categories: { 
+              id: { $eq: categorieId }
+            },
+            statut: { $eq: "actif" }
+          },
+          populate: {
+            images: true,
+            image_principale: true,
+            categories: true
+          },
+          sort: ["ordre_affichage:asc"],
+          pagination: { pageSize: 20 }
+        };
+        
+        const result = await fetchStrapi<Produit>("/produits", queryWithId);
+        objects = result.objects;
+      }
+    }
+
+    // Si toujours rien, essayer une syntaxe plus simple
+    if (!objects || objects.length === 0) {
+      console.log('⚠️ Tentative avec syntaxe simplifiée...');
+      
+      const simpleQuery = {
+        filters: {
+          categories: categorieDocumentId,
+          statut: "actif"
+        },
+        populate: {
+          images: true,
+          image_principale: true,
+          categories: true
+        },
+        sort: ["ordre_affichage:asc"],
+        pagination: { pageSize: 20 }
+      };
+      
+      const result = await fetchStrapi<Produit>("/produits", simpleQuery);
+      objects = result.objects;
+    }
+
     console.log(`📦 Produits trouvés pour la catégorie ${categorieDocumentId}:`, objects?.length || 0);
     return objects ?? [];
 
   } catch (error) {
     console.error(`❌ Erreur getProduitsParCategorie pour catégorie ${categorieDocumentId}:`, error);
-    return [];
+    
+    // Fallback ultime - récupérer tous les produits et filtrer côté client
+    try {
+      console.log('🔄 Fallback: filtrage côté client...');
+      const allProducts = await getProduits();
+      const filteredProducts = allProducts.filter(produit => 
+        produit.categories?.some(cat => 
+          cat.documentId === categorieDocumentId || 
+          cat.id?.toString() === categorieDocumentId
+        )
+      );
+      console.log(`📦 Produits filtrés côté client: ${filteredProducts.length}`);
+      return filteredProducts;
+    } catch (fallbackError) {
+      console.error('❌ Fallback échoué:', fallbackError);
+      return [];
+    }
   }
 }
 
