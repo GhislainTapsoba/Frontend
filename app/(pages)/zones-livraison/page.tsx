@@ -1,5 +1,6 @@
 // app/(pages)/zones-livraison/page.tsx
 import { Suspense } from "react";
+import Image from "next/image";
 import { LoadingSpinner } from "@/components/common/LoadingSpinner";
 import { ErrorBoundary } from "@/components/common/ErrorBoundary";
 import { getZonesLivraison } from "@/lib/api/laravel";
@@ -71,6 +72,31 @@ async function PageContent() {
           Découvrez les secteurs où nous livrons et les frais associés à chaque
           zone.
         </p>
+      </div>
+
+      {/* Image principale */}
+      <div className="relative w-full h-64 md:h-96 mb-12 rounded-2xl overflow-hidden shadow-xl">
+        <Image 
+          src="/images/zoneslivraison.jpg" // Remplacez par le chemin de votre image
+          alt="Carte des zones de livraison" 
+          fill 
+          style={{ objectFit: "contain" }} 
+          priority 
+          className="transition-transform hover:scale-105 duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        
+        {/* Overlay avec texte sur l'image */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="text-center text-white">
+            <h2 className="text-2xl md:text-3xl font-bold mb-2">
+              Livraison rapide et fiable
+            </h2>
+            <p className="text-lg opacity-90">
+              Partout où vous êtes, nous sommes là pour vous servir
+            </p>
+          </div>
+        </div>
       </div>
 
       {/* Liste des zones */}

@@ -273,7 +273,8 @@ export async function getCategories(): Promise<Categorie[]> {
       populate: { 
         image: true, 
         categorie_parente: true, 
-        sous_categories: true 
+        sous_categories: true,
+        produits: true // Pour compter les produits
       },
       sort: ["ordre_affichage:asc"],
       pagination: { pageSize: 100 }
@@ -341,10 +342,12 @@ export async function getCategorieBySlug(slug: string): Promise<Categorie | null
 // ========== FONCTION POUR RÉCUPÉRER LES PRODUITS D'UNE CATÉGORIE CORRIGÉE ==========
 export async function getProduitsParCategorie(categorieDocumentId: string): Promise<Produit[]> {
   try {
-    // Option 1: Syntaxe corrigée pour les relations avec documentId
-    const query = {
+    console.log(`🔍 Recherche des produits pour la catégorie: ${categorieDocumentId}`);
+
+    // Option 1: Syntaxe correcte avec nested object
+    let query = {
       filters: {
-        categories: { 
+        categories: {
           documentId: { $eq: categorieDocumentId }
         },
         statut: { $eq: "actif" }
@@ -354,75 +357,121 @@ export async function getProduitsParCategorie(categorieDocumentId: string): Prom
         image_principale: true,
         categories: true
       },
-      sort: ["ordre_affichage:asc"],
+      sort: ["createdAt:desc"],
       pagination: { pageSize: 20 }
     };
 
-    console.log('🔍 Tentative avec documentId...');
+    console.log('🔍 Tentative 1: syntaxe nested correcte...');
     let { objects } = await fetchStrapi<Produit>("/produits", query);
     
-    // Si ça ne marche pas, essayer avec l'ID numérique
+    // Option 2: Si échec, essayer avec l'ID numérique directement
     if (!objects || objects.length === 0) {
-      console.log('⚠️ Aucun produit trouvé avec documentId, tentative avec ID numérique...');
+      console.log('⚠️ Tentative 2: récupération ID numérique...');
       
-      // D'abord, récupérer la catégorie pour obtenir son ID numérique
-      const categorieQuery = {
-        filters: { documentId: { $eq: categorieDocumentId } },
-        pagination: { pageSize: 1 }
-      };
-      
-      const { objects: categories } = await fetchStrapi<Categorie>("/categories", categorieQuery);
-      
-      if (categories && categories.length > 0) {
-        const categorieId = categories[0].id;
-        console.log(`🔄 Retry avec ID numérique: ${categorieId}`);
-        
-        // Option 2: Utiliser l'ID numérique
-        const queryWithId = {
-          filters: {
-            categories: { 
-              id: { $eq: categorieId }
-            },
-            statut: { $eq: "actif" }
+      try {
+        // Récupérer la catégorie pour obtenir son ID numérique
+        const categorieQuery = {
+          filters: { 
+            documentId: { $eq: categorieDocumentId }
           },
-          populate: {
-            images: true,
-            image_principale: true,
-            categories: true
-          },
-          sort: ["ordre_affichage:asc"],
-          pagination: { pageSize: 20 }
+          pagination: { pageSize: 1 }
         };
         
-        const result = await fetchStrapi<Produit>("/produits", queryWithId);
-        objects = result.objects;
+        const { objects: categories } = await fetchStrapi<Categorie>("/categories", categorieQuery);
+        
+        if (categories && categories.length > 0) {
+          const categorieId = categories[0].id;
+          console.log(`🔄 Retry avec ID numérique: ${categorieId}`);
+          
+          // Utiliser l'ID numérique
+          query = {
+            filters: {
+              categories: {
+                id: { $eq: categorieId }
+              },
+              statut: { $eq: "actif" }
+            },
+            populate: {
+              images: true,
+              image_principale: true,
+              categories: true
+            },
+            sort: ["createdAt:desc"],
+            pagination: { pageSize: 20 }
+          } as any;
+          
+          const result = await fetchStrapi<Produit>("/produits", query);
+          objects = result.objects;
+        }
+      } catch (idError) {
+        console.log('⚠️ Erreur lors de la récupération de l\'ID numérique:', idError);
       }
     }
 
-    // Si toujours rien, essayer une syntaxe plus simple
+    // Option 3: Syntaxe ultra-simplifiée sans $eq
     if (!objects || objects.length === 0) {
-      console.log('⚠️ Tentative avec syntaxe simplifiée...');
+      console.log('⚠️ Tentative 3: syntaxe ultra-simplifiée...');
       
-      const simpleQuery = {
+      query = {
         filters: {
-          categories: categorieDocumentId,
-          statut: "actif"
+          categories: {
+            documentId: categorieDocumentId // Sans $eq
+          },
+          statut: { $eq: "actif" }
         },
         populate: {
           images: true,
           image_principale: true,
           categories: true
         },
-        sort: ["ordre_affichage:asc"],
+        sort: ["createdAt:desc"],
         pagination: { pageSize: 20 }
-      };
+      } as any;
       
-      const result = await fetchStrapi<Produit>("/produits", simpleQuery);
+      const result = await fetchStrapi<Produit>("/produits", query);
+      objects = result.objects;
+    }
+
+    // Option 5: Essayer sans le champ ordre_affichage (peut causer des erreurs)
+    if (!objects || objects.length === 0) {
+      console.log('⚠️ Tentative 5: sans tri spécifique...');
+      
+      query = {
+        filters: {
+          categories: { 
+            documentId: { $eq: categorieDocumentId }
+          },
+          statut: { $eq: "actif" }
+        },
+        populate: {
+          images: true,
+          image_principale: true,
+          categories: true
+        },
+        // Pas de sort du tout
+        pagination: { pageSize: 20 }
+      } as any;
+      
+      const result = await fetchStrapi<Produit>("/produits", query);
       objects = result.objects;
     }
 
     console.log(`📦 Produits trouvés pour la catégorie ${categorieDocumentId}:`, objects?.length || 0);
-    return objects ?? [];
+    
+    if (objects && objects.length > 0) {
+      // Si on a des résultats, les trier côté client si nécessaire
+      const sortedObjects = objects.sort((a, b) => {
+        // Essayer de trier par ordre_affichage si disponible, sinon par createdAt
+        if ((a as any).ordre_affichage !== undefined && (b as any).ordre_affichage !== undefined) {
+          return (a as any).ordre_affichage - (b as any).ordre_affichage;
+        }
+        return new Date(b.createdAt || '').getTime() - new Date(a.createdAt || '').getTime();
+      });
+      
+      return sortedObjects;
+    }
+    
+    return [];
 
   } catch (error) {
     console.error(`❌ Erreur getProduitsParCategorie pour catégorie ${categorieDocumentId}:`, error);
@@ -434,7 +483,8 @@ export async function getProduitsParCategorie(categorieDocumentId: string): Prom
       const filteredProducts = allProducts.filter(produit => 
         produit.categories?.some(cat => 
           cat.documentId === categorieDocumentId || 
-          cat.id?.toString() === categorieDocumentId
+          cat.id?.toString() === categorieDocumentId ||
+          cat.slug === categorieDocumentId
         )
       );
       console.log(`📦 Produits filtrés côté client: ${filteredProducts.length}`);
@@ -443,6 +493,38 @@ export async function getProduitsParCategorie(categorieDocumentId: string): Prom
       console.error('❌ Fallback échoué:', fallbackError);
       return [];
     }
+  }
+}
+
+// Fonction helper pour diagnostiquer les problèmes Strapi
+export async function debugStrapiCategories(): Promise<void> {
+  try {
+    console.log('🔍 Debug: Structure des catégories...');
+    
+    // Récupérer une catégorie pour voir sa structure
+    const { objects: categories } = await fetchStrapi<Categorie>("/categories", {
+      pagination: { pageSize: 1 },
+      populate: "*"
+    });
+    
+    if (categories && categories.length > 0) {
+      console.log('📋 Structure catégorie:', JSON.stringify(categories[0], null, 2));
+    }
+
+    // Récupérer un produit pour voir sa structure
+    const { objects: products } = await fetchStrapi<Produit>("/produits", {
+      pagination: { pageSize: 1 },
+      populate: {
+        categories: true
+      }
+    });
+    
+    if (products && products.length > 0) {
+      console.log('📋 Structure produit:', JSON.stringify(products[0], null, 2));
+    }
+    
+  } catch (error) {
+    console.error('❌ Erreur debug:', error);
   }
 }
 

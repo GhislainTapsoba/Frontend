@@ -53,7 +53,7 @@ async function PageContent({ slug }: { slug: string }) {
             src={imageUrl} 
             alt={altText} 
             fill 
-            style={{ objectFit: "cover" }} 
+            style={{ objectFit: "contain" }} 
             priority 
             className="transition-transform hover:scale-105 duration-500"
           />
@@ -75,7 +75,7 @@ async function PageContent({ slug }: { slug: string }) {
       )}
 
       {/* Section CTA */}
-      <div className="mt-16 text-center bg-gradient-to-br from-blue-600 to-purple-700 text-white p-12 rounded-2xl">
+      <div className="mt-16 text-center bg-gradient-to-br from-yellow-400 to-yellow-700 text-white p-12 rounded-2xl">
         <h2 className="text-3xl font-bold mb-4">
           Prêt à découvrir nos produits ?
         </h2>

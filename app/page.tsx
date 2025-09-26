@@ -27,7 +27,7 @@ export default async function HomePage() {
       <section className="relative bg-gradient-to-r from-purple-600 to-pink-600 text-white py-24 px-6 rounded-lg shadow-lg overflow-hidden">
         <div
           className="absolute inset-0 opacity-20 bg-cover bg-center"
-          style={{ backgroundImage: 'url("/images/Gojo.jpg?height=800&width=1200")' }}
+          style={{ backgroundImage: 'url("/images/shopping3.jpg?height=800&width=1200")' }}
           aria-hidden="true"
         />
         <div className="relative z-10 max-w-3xl mx-auto text-center">
@@ -54,7 +54,7 @@ export default async function HomePage() {
         {categories?.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {categories.map((categorie) => (
-              <CategoryCard key={categorie.id} categorie={categorie} />
+              <CategoryCard key={categorie.documentId || categorie.slug} categorie={categorie} />
             ))}
           </div>
         ) : (

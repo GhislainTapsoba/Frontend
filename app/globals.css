@@ -3,168 +3,145 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===========================
+   🎨 PALETTE E-COMMERCE
+   =========================== */
 :root {
-  /* === COULEURS E-COMMERCE OPTIMISÉES === */
-  
-  /* Arrière-plans principaux */
-  --background: oklch(0.99 0.005 210);           /* Blanc très légèrement teinté bleu */
-  --foreground: oklch(0.12 0.02 240);           /* Texte principal - bleu très foncé */
-  
-  /* Cards et surfaces */
-  --card: oklch(1 0 0);                         /* Blanc pur pour les cards produits */
-  --card-foreground: oklch(0.12 0.02 240);
+  /* Arrière-plan clair */
+  --background: oklch(0.99 0.005 210);
+  --foreground: oklch(0.12 0.02 240);
+
+  /* Cards / surfaces */
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.12 0.02 240);
-  
-  /* Couleur primaire - Bleu confiance e-commerce */
-  --primary: oklch(0.55 0.18 250);              /* Bleu professionnel et moderne */
+  --popover-foreground: var(--foreground);
+
+  /* Couleurs principales */
+  --primary: oklch(0.55 0.15 280);       /* Violet premium */
   --primary-foreground: oklch(1 0 0);
-  
-  /* Couleur secondaire - Orange action/CTA */
-  --secondary: oklch(0.68 0.15 45);             /* Orange chaleureux pour boutons d'action */
+  --secondary: oklch(0.68 0.15 45);      /* Orange CTA */
   --secondary-foreground: oklch(1 0 0);
-  
-  /* Surfaces neutres */
-  --muted: oklch(0.97 0.01 220);               /* Gris très clair avec nuance bleue */
-  --muted-foreground: oklch(0.48 0.03 240);    /* Texte secondaire */
-  
-  /* Couleur accent - Vert succès */
-  --accent: oklch(0.65 0.16 140);              /* Vert pour succès, stock, promotions */
+  --accent: oklch(0.65 0.16 160);        /* Vert succès */
   --accent-foreground: oklch(1 0 0);
-  
-  /* Couleurs d'état */
-  --destructive: oklch(0.58 0.22 25);          /* Rouge pour erreurs */
+
+  /* Neutres */
+  --muted: oklch(0.97 0.01 220);
+  --muted-foreground: oklch(0.48 0.03 240);
+
+  /* États */
+  --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(1 0 0);
-  --success: oklch(0.65 0.16 140);             /* Vert pour succès */
+  --success: var(--accent);
   --success-foreground: oklch(1 0 0);
-  --warning: oklch(0.75 0.15 70);              /* Orange pour avertissements */
-  --warning-foreground: oklch(0.12 0.02 240);
-  
-  /* Bordures et inputs */
-  --border: oklch(0.92 0.01 220);              /* Bordures subtiles */
-  --input: oklch(0.98 0.005 220);              /* Fond des inputs */
-  --ring: oklch(0.55 0.18 250);                /* Focus ring */
-  
-  /* Couleurs pour graphiques e-commerce */
-  --chart-1: oklch(0.65 0.2 250);             /* Bleu - Ventes */
-  --chart-2: oklch(0.68 0.15 45);             /* Orange - Conversions */
-  --chart-3: oklch(0.65 0.16 140);            /* Vert - Profits */
-  --chart-4: oklch(0.72 0.18 320);            /* Violet - Visiteurs */
-  --chart-5: oklch(0.75 0.15 70);             /* Jaune - Paniers */
-  
-  /* Spécifique e-commerce */
-  --price: oklch(0.45 0.08 25);               /* Rouge foncé pour prix */
-  --price-sale: oklch(0.58 0.22 25);          /* Rouge vif pour prix barrés */
-  --stock-low: oklch(0.65 0.18 35);           /* Orange pour stock faible */
-  --stock-out: oklch(0.58 0.22 25);           /* Rouge pour rupture */
-  --rating: oklch(0.75 0.15 70);              /* Doré pour étoiles */
-  --badge: oklch(0.68 0.15 45);               /* Orange pour badges promo */
-  
-  /* Rayon de bordure */
-  --radius: 0.75rem;                          /* Coins plus arrondis pour e-commerce */
-  
-  /* Sidebar/Navigation */
+  --warning: oklch(0.75 0.15 70);
+  --warning-foreground: var(--foreground);
+
+  /* Bordures / inputs */
+  --border: oklch(0.92 0.01 220);
+  --input: oklch(0.98 0.005 220);
+  --ring: var(--primary);
+
+  /* Prix / stock / rating */
+  --price: oklch(0.45 0.08 25);
+  --price-sale: oklch(0.58 0.22 25);
+  --stock-low: oklch(0.65 0.18 35);
+  --stock-out: oklch(0.58 0.22 25);
+  --rating: oklch(0.75 0.15 70);
+  --badge: var(--secondary);
+
+  /* Sidebar */
   --sidebar: oklch(0.98 0.01 220);
-  --sidebar-foreground: oklch(0.12 0.02 240);
-  --sidebar-primary: oklch(0.55 0.18 250);
-  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-primary: var(--primary);
+  --sidebar-primary-foreground: var(--primary-foreground);
   --sidebar-accent: oklch(0.95 0.01 220);
-  --sidebar-accent-foreground: oklch(0.12 0.02 240);
-  --sidebar-border: oklch(0.92 0.01 220);
-  --sidebar-ring: oklch(0.55 0.18 250);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border);
+  --sidebar-ring: var(--ring);
+
+  /* Radius */
+  --radius: 0.9rem;
 }
 
 .dark {
-  /* === MODE SOMBRE E-COMMERCE === */
-  
-  /* Arrière-plans sombres */
-  --background: oklch(0.08 0.01 240);           /* Noir bleuté très sombre */
-  --foreground: oklch(0.95 0.01 220);          /* Texte clair */
-  
-  /* Cards en mode sombre */
-  --card: oklch(0.12 0.01 240);               /* Gris très foncé pour cards */
-  --card-foreground: oklch(0.95 0.01 220);
-  --popover: oklch(0.12 0.01 240);
-  --popover-foreground: oklch(0.95 0.01 220);
-  
-  /* Primaire en mode sombre */
-  --primary: oklch(0.68 0.18 250);            /* Bleu plus clair */
-  --primary-foreground: oklch(0.08 0.01 240);
-  
-  /* Secondaire en mode sombre */
-  --secondary: oklch(0.25 0.02 240);          /* Gris foncé */
-  --secondary-foreground: oklch(0.95 0.01 220);
-  
-  /* Surfaces neutres sombres */
-  --muted: oklch(0.25 0.02 240);
-  --muted-foreground: oklch(0.65 0.01 220);
-  
-  /* Accent en mode sombre */
-  --accent: oklch(0.32 0.02 240);
-  --accent-foreground: oklch(0.95 0.01 220);
-  
-  /* États en mode sombre */
+  /* Arrière-plan sombre */
+  --background: oklch(0.12 0.02 250);
+  --foreground: oklch(0.9 0.02 260);
+
+  /* Cards / surfaces */
+  --card: oklch(0.18 0.02 250 / 0.85);
+  --card-foreground: var(--foreground);
+  --popover: oklch(0.18 0.02 250);
+  --popover-foreground: var(--foreground);
+
+  /* Couleurs principales */
+  --primary: oklch(0.72 0.18 280);
+  --primary-foreground: oklch(0.1 0.01 250);
+  --secondary: oklch(0.75 0.15 70);
+  --secondary-foreground: oklch(0.1 0.01 240);
+  --accent: oklch(0.65 0.16 160);
+  --accent-foreground: oklch(0.1 0.01 240);
+
+  /* Neutres */
+  --muted: oklch(0.22 0.01 250);
+  --muted-foreground: oklch(0.7 0.01 250);
+
+  /* États */
   --destructive: oklch(0.45 0.18 25);
-  --destructive-foreground: oklch(0.95 0.01 220);
+  --destructive-foreground: var(--foreground);
   --success: oklch(0.55 0.14 140);
   --success-foreground: oklch(0.08 0.01 240);
   --warning: oklch(0.65 0.13 70);
   --warning-foreground: oklch(0.08 0.01 240);
-  
-  /* Bordures sombres */
-  --border: oklch(0.25 0.02 240);
+
+  /* Bordures / inputs */
+  --border: oklch(0.25 0.01 250);
   --input: oklch(0.25 0.02 240);
-  --ring: oklch(0.68 0.18 250);
-  
-  /* Graphiques en mode sombre */
-  --chart-1: oklch(0.58 0.22 264);
-  --chart-2: oklch(0.7 0.17 162);
-  --chart-3: oklch(0.77 0.19 70);
-  --chart-4: oklch(0.63 0.27 304);
-  --chart-5: oklch(0.65 0.25 16);
-  
-  /* E-commerce spécifique sombre */
+  --ring: var(--primary);
+
+  /* Prix / stock / rating */
   --price: oklch(0.85 0.08 220);
   --price-sale: oklch(0.75 0.18 25);
   --stock-low: oklch(0.75 0.15 35);
   --stock-out: oklch(0.65 0.18 25);
   --rating: oklch(0.85 0.13 70);
   --badge: oklch(0.78 0.13 45);
-  
-  /* Sidebar sombre */
+
+  /* Sidebar */
   --sidebar: oklch(0.12 0.01 240);
   --sidebar-foreground: oklch(0.95 0.01 220);
-  --sidebar-primary: oklch(0.68 0.18 250);
+  --sidebar-primary: var(--primary);
   --sidebar-primary-foreground: oklch(0.08 0.01 240);
   --sidebar-accent: oklch(0.25 0.02 240);
-  --sidebar-accent-foreground: oklch(0.95 0.01 220);
+  --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: oklch(0.25 0.02 240);
-  --sidebar-ring: oklch(0.68 0.18 250);
+  --sidebar-ring: var(--primary);
 }
 
+/* ===========================
+   🌈 MAP DES VARIABLES POUR TAILWIND
+   =========================== */
 @theme inline {
-  /* === VARIABLES TAILWIND === */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
-  --color-popover: var(--popover);
-  --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  
-  /* Variables e-commerce spécifiques */
+
+  /* E-commerce */
   --color-success: var(--success);
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
@@ -175,22 +152,7 @@
   --color-stock-out: var(--stock-out);
   --color-rating: var(--rating);
   --color-badge: var(--badge);
-  
-  /* Graphiques */
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
-  
-  /* Rayons optimisés e-commerce */
-  --radius-xs: calc(var(--radius) - 6px);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  
+
   /* Sidebar */
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
@@ -200,175 +162,96 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Radius */
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
 }
 
+/* ===========================
+   🌍 BASE GLOBALE
+   =========================== */
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  
+
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
-  
-  /* === STYLES E-COMMERCE SPÉCIFIQUES === */
-  
-  /* Boutons produits */
-  .btn-add-to-cart {
-    @apply bg-accent hover:bg-accent/90 text-accent-foreground;
-    @apply px-6 py-3 rounded-lg font-medium transition-all duration-200;
-    @apply shadow-sm hover:shadow-md transform hover:scale-[1.02];
+
+  h1, h2, h3, h4 {
+    @apply font-bold tracking-tight;
   }
-  
-  .btn-buy-now {
-    @apply bg-secondary hover:bg-secondary/90 text-secondary-foreground;
-    @apply px-8 py-3 rounded-lg font-semibold transition-all duration-200;
-    @apply shadow-md hover:shadow-lg transform hover:scale-[1.02];
-  }
-  
-  /* Prix */
-  .price-current {
-    color: var(--price);
-    @apply text-2xl font-bold;
-  }
-  
-  .price-original {
-    color: var(--price-sale);
-    @apply text-lg line-through opacity-75;
-  }
-  
-  .price-discount {
-    @apply bg-destructive text-destructive-foreground;
-    @apply px-2 py-1 rounded text-sm font-medium;
-  }
-  
-  /* États de stock */
-  .stock-available {
-    color: var(--success);
-    @apply font-medium;
-  }
-  
-  .stock-low {
-    color: var(--stock-low);
-    @apply font-medium;
-  }
-  
-  .stock-out {
-    color: var(--stock-out);
-    @apply font-medium;
-  }
-  
-  /* Étoiles de notation */
-  .rating-star {
-    color: var(--rating);
-  }
-  
-  /* Badges promotionnels */
-  .promo-badge {
-    background: var(--badge);
-    @apply text-white px-3 py-1 rounded-full text-sm font-bold;
-    @apply animate-pulse;
-  }
-  
-  /* Cards produits */
-  .product-card {
-    @apply bg-card border border-border rounded-xl overflow-hidden;
-    @apply hover:shadow-lg transition-all duration-300;
-    @apply transform hover:scale-[1.02] hover:border-primary/20;
-  }
-  
-  /* Navigation e-commerce */
-  .nav-link {
-    @apply text-muted-foreground hover:text-foreground;
-    @apply transition-colors duration-200 font-medium;
-  }
-  
-  .nav-link.active {
-    @apply text-primary border-b-2 border-primary;
-  }
-  
-  /* Catégories */
-  .category-chip {
-    @apply bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground;
-    @apply px-4 py-2 rounded-full text-sm font-medium cursor-pointer;
-    @apply transition-all duration-200;
-  }
-  
-  /* Panier */
-  .cart-item {
-    @apply border-b border-border last:border-b-0;
-    @apply py-4 flex items-center gap-4;
-  }
-  
-  .cart-total {
-    @apply bg-muted/50 border border-border rounded-lg p-4;
-    @apply text-lg font-bold text-foreground;
-  }
-  
-  /* Formulaires */
-  .form-input {
-    @apply bg-input border border-border rounded-lg px-4 py-3;
-    @apply focus:ring-2 focus:ring-ring focus:border-ring;
-    @apply transition-all duration-200;
-  }
-  
-  /* Animations e-commerce */
-  .slide-up {
-    @apply animate-in slide-in-from-bottom-4 duration-300;
-  }
-  
-  .fade-in {
-    @apply animate-in fade-in duration-500;
-  }
-  
-  .scale-in {
-    @apply animate-in zoom-in-95 duration-200;
-  }
-  
-  /* Responsive e-commerce */
-  @media (max-width: 640px) {
-    .product-grid {
-      @apply grid-cols-2 gap-3;
-    }
-    
-    .btn-add-to-cart, .btn-buy-now {
-      @apply text-sm px-4 py-2;
-    }
-  }
+
+  h1 { @apply text-4xl md:text-5xl text-primary; }
+  h2 { @apply text-3xl md:text-4xl text-secondary; }
+  h3 { @apply text-2xl text-accent; }
+  h4 { @apply text-xl text-foreground; }
 }
 
-/* === UTILITAIRES SUPPLÉMENTAIRES === */
-@layer utilities {
-  .text-price {
+/* ===========================
+   🛒 COMPOSANTS E-COMMERCE
+   =========================== */
+@layer components {
+  /* Boutons */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 px-6 py-3 rounded-xl font-semibold shadow-md transition-all;
+  }
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 px-6 py-3 rounded-xl font-semibold shadow-md transition-all;
+  }
+  .btn-outline {
+    @apply border border-border bg-transparent hover:bg-muted px-6 py-3 rounded-xl font-medium;
+  }
+
+  /* Cartes */
+  .product-card {
+    @apply bg-card border border-border rounded-xl overflow-hidden shadow-md transition-all duration-300;
+    @apply hover:shadow-xl hover:border-primary/40 hover:scale-[1.02];
+    backdrop-filter: blur(12px);
+  }
+  .category-card {
+    @apply bg-card border border-border rounded-xl p-6 text-center shadow transition-all duration-300;
+    @apply hover:shadow-lg hover:border-secondary/50 hover:scale-[1.03];
+  }
+
+  /* Prix */
+  .price-current {
+    @apply text-2xl font-bold;
     color: var(--price);
   }
-  
-  .text-price-sale {
+  .price-original {
+    @apply line-through opacity-70;
     color: var(--price-sale);
   }
-  
-  .bg-success {
-    background-color: var(--success);
+  .promo-badge {
+    @apply px-3 py-1 rounded-full text-sm font-bold animate-pulse;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
   }
-  
-  .bg-warning {
-    background-color: var(--warning);
-  }
-  
-  .text-success {
-    color: var(--success);
-  }
-  
-  .text-warning {
-    color: var(--warning);
-  }
-  
-  .border-success {
-    border-color: var(--success);
-  }
-  
-  .border-warning {
-    border-color: var(--warning);
-  }
+
+  /* Stock */
+  .stock-available { color: var(--success); }
+  .stock-low { color: var(--stock-low); }
+  .stock-out { color: var(--stock-out); }
+
+  /* Rating */
+  .rating-star { color: var(--rating); }
+}
+
+/* ===========================
+   🔧 UTILITAIRES SUPPLÉMENTAIRES
+   =========================== */
+@layer utilities {
+  .text-price { color: var(--price); }
+  .text-price-sale { color: var(--price-sale); }
+  .bg-success { background-color: var(--success); }
+  .bg-warning { background-color: var(--warning); }
+  .text-success { color: var(--success); }
+  .text-warning { color: var(--warning); }
+  .border-success { border-color: var(--success); }
+  .border-warning { border-color: var(--warning); }
 }

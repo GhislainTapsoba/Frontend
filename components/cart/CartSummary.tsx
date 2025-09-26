@@ -22,22 +22,29 @@ interface CartSummaryProps {
   onDeliveryFeeChange?: (fee: number) => void;
   onZoneSelect?: (zoneId: number | null) => void;
   selectedZoneId?: number | null;
+  isCalculatingFee?: boolean;
+  setIsCalculatingFee?: (val: boolean) => void;
 }
 
 export function CartSummary({
   onDeliveryFeeChange,
   onZoneSelect,
   selectedZoneId: propSelectedZoneId,
+  isCalculatingFee,
+  setIsCalculatingFee,
 }: CartSummaryProps) {
   const { getTotalPrice } = useCart();
-  const subtotal = getTotalPrice();
+  const subtotal = Number(getTotalPrice()) || 0;
   const { toast } = useToast();
 
   const [zonesLivraison, setZonesLivraison] = useState<ZoneLivraison[]>([]);
   const [zoneSelectionnee, setZoneSelectionnee] = useState<ZoneLivraison | null>(null);
   const [fraisLivraison, setFraisLivraison] = useState<number>(0);
   const [isLoadingZones, setIsLoadingZones] = useState(true);
-  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
+  // Si la page fournit le contrôle, utilise-le, sinon local
+  const [localCalculatingFee, setLocalCalculatingFee] = useState(false);
+  const calculatingFee = typeof isCalculatingFee === "boolean" ? isCalculatingFee : localCalculatingFee;
+  const setCalculatingFee = setIsCalculatingFee || setLocalCalculatingFee;
 
   const selectedZoneId = propSelectedZoneId ?? zoneSelectionnee?.id ?? null;
 
@@ -75,7 +82,7 @@ export function CartSummary({
 
     debounceRef.current = setTimeout(async () => {
       if (selectedZoneId && subtotal > 0) {
-        setIsCalculatingFee(true);
+        setCalculatingFee(true);
         try {
           const result = await calculerFraisLivraison(selectedZoneId, subtotal);
 
@@ -100,11 +107,12 @@ export function CartSummary({
             variant: "destructive",
           });
         } finally {
-          setIsCalculatingFee(false);
+          setCalculatingFee(false);
         }
       } else {
         setFraisLivraison(0);
         onDeliveryFeeChange?.(0);
+        setCalculatingFee(false);
       }
     }, 400); // 400ms debounce
 
@@ -121,51 +129,66 @@ export function CartSummary({
     onZoneSelect?.(zone?.id ?? null);
   };
 
-  const total = subtotal + fraisLivraison;
+  const total = Number(subtotal) + Number(fraisLivraison);
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Récapitulatif de la commande</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex justify-between">
-          <span>Sous-total:</span>
-          <span>{formatPrice(subtotal)}</span>
-        </div>
+    <div className="bg-gray-800 p-8 rounded-2xl shadow-xl">
+      <Card className="bg-transparent border-none shadow-none">
+        <CardHeader className="px-0 pb-6">
+          <CardTitle className="text-white text-2xl font-semibold">Récapitulatif de la commande</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6 px-0">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-200 text-lg">Sous-total:</span>
+            <span className="text-white font-semibold text-lg">{formatPrice(subtotal)}</span>
+          </div>
 
-        <div>
-          <Label htmlFor="delivery-zone">Zone de livraison</Label>
-          {isLoadingZones ? (
-            <LoadingSpinner />
-          ) : (
-            <Select onValueChange={handleZoneChange} value={selectedZoneId?.toString() ?? ""}>
-              <SelectTrigger id="delivery-zone" className="w-full">
-                <SelectValue placeholder="Sélectionnez une zone de livraison" />
-              </SelectTrigger>
-              <SelectContent>
-                {zonesLivraison.map((zone) => (
-                  <SelectItem key={zone.id} value={zone.id.toString()}>
-                    {zone.name} ({formatPrice(zone.delivery_fee ?? 0)})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+          <div className="space-y-2">
+            <Label htmlFor="delivery-zone" className="text-gray-200 font-medium">Zone de livraison</Label>
+            {isLoadingZones ? (
+              <div className="flex justify-center py-4">
+                <LoadingSpinner />
+              </div>
+            ) : (
+              <Select onValueChange={handleZoneChange} value={selectedZoneId?.toString() ?? ""}>
+                <SelectTrigger 
+                  id="delivery-zone" 
+                  className="w-full bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400 focus:ring-purple-400/20"
+                >
+                  <SelectValue placeholder="Sélectionnez une zone de livraison" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {zonesLivraison.map((zone) => (
+                    <SelectItem 
+                      key={zone.id} 
+                      value={zone.id.toString()}
+                      className="text-white hover:bg-gray-600 focus:bg-gray-600 cursor-pointer"
+                    >
+                      {zone.name} ({formatPrice(zone.delivery_fee ?? 0)})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
 
-        <div className="flex justify-between">
-          <span>Frais de livraison:</span>
-          {isCalculatingFee ? <LoadingSpinner /> : <span>{formatPrice(fraisLivraison)}</span>}
-        </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-200 text-lg">Frais de livraison:</span>
+            {calculatingFee ? (
+              <LoadingSpinner />
+            ) : (
+              <span className="text-white font-semibold text-lg">{formatPrice(fraisLivraison)}</span>
+            )}
+          </div>
 
-        <Separator />
+          <Separator className="bg-gray-600" />
 
-        <div className="flex justify-between font-bold text-lg">
-          <span>Total:</span>
-          <span>{formatPrice(total)}</span>
-        </div>
-      </CardContent>
-    </Card>
+          <div className="flex justify-between items-center bg-gradient-to-r from-purple-600/20 to-purple-500/20 p-4 rounded-xl border border-purple-500/30">
+            <span className="text-white font-bold text-xl">Total:</span>
+            <span className="text-white font-bold text-2xl">{formatPrice(total)}</span>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

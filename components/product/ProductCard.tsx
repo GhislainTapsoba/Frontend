@@ -8,6 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils/format";
 import type { Produit } from "@/types/strapi";
+import { useCart } from "@/lib/hooks/useCart";
+import { useToast } from "@/components/ui/use-toast";
 
 interface ProductCardProps {
   produit: Produit;
@@ -19,25 +21,34 @@ export function ProductCard({ produit }: ProductCardProps) {
     if (!produit.image_principale?.url) {
       return "/images/shopping.jpeg";
     }
-    
     const url = produit.image_principale.url;
-    
-    // Si l'URL commence par "/uploads", c'est une URL Strapi
     if (url.startsWith("/uploads")) {
-      // Toujours utiliser l'URL complète pour éviter les différences server/client
       return `${process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337"}${url}`;
     }
-    
-    // Si c'est déjà une URL complète
     if (url.startsWith("http")) {
       return url;
     }
-    
-    // Fallback
     return `${process.env.NEXT_PUBLIC_STRAPI_URL || "http://localhost:1337"}/uploads/${url}`;
   };
 
   const imageUrl = getImageUrl();
+  const { addItem } = useCart();
+  const { toast } = useToast();
+
+  const handleAddToCart = () => {
+    addItem({
+      id: produit.id,
+      nom: produit.nom,
+      prix: produit.prix,
+      quantite: 1,
+      image: imageUrl,
+      variant: undefined,
+    });
+    toast({
+      title: "Ajouté au panier",
+      description: `${produit.nom} a été ajouté au panier.`,
+    });
+  };
 
   return (
     <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
@@ -105,6 +116,7 @@ export function ProductCard({ produit }: ProductCardProps) {
           <Button 
             className="w-full bg-purple-600 hover:bg-purple-700" 
             disabled={produit.statut !== "actif"}
+            onClick={handleAddToCart}
           >
             {produit.statut === "actif" ? "Ajouter au panier" : "Indisponible"}
           </Button>

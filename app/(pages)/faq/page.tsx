@@ -125,7 +125,7 @@ async function PageContent({ slug }: { slug: string }) {
             src={imageUrl} 
             alt={altText} 
             fill 
-            style={{ objectFit: "cover" }} 
+            style={{ objectFit: "contain" }} 
             priority 
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />

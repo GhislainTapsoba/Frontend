@@ -70,7 +70,14 @@ export async function calculerFraisLivraison(zoneId: number, subtotal: number): 
   }>('/v1/calculate-delivery', {
     method: 'POST',
     body: JSON.stringify({ delivery_zone_id: zoneId, subtotal }),
-  }).then(res => res.data);
+  }).then(res => {
+    console.log('[Laravel] calculerFraisLivraison:', {
+      zoneId,
+      subtotal,
+      result: res.data
+    });
+    return res.data;
+  });
 }
 
 // --- Création d'une commande ---

@@ -4,8 +4,8 @@ import Link from "next/link";
 import { ContactForm } from "@/components/common/ContactForm";
 
 export default function ContactPage() {
-  const companyEmail = process.env.NEXT_PUBLIC_COMPANY_EMAIL || "contact@example.com";
-  const whatsappNumberRaw = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+1234567890";
+  const companyEmail = process.env.NEXT_PUBLIC_COMPANY_EMAIL || "arseneghislaintaps@gmail.com";
+  const whatsappNumberRaw = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "+22605929883";
   // On enlève les caractères non numériques pour le lien WhatsApp (ex: +, espaces)
   const whatsappNumber = whatsappNumberRaw.replace(/\D/g, "");
   const adresse = process.env.NEXT_PUBLIC_ADRESSE || "123 Rue de l'Entreprise, Ville, Pays";

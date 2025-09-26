@@ -18,6 +18,7 @@ export default function OrderPage() {
   const [fraisLivraison, setFraisLivraison] = useState<number>(0);
   const [zoneSelectionneeId, setZoneSelectionneeId] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCalculatingFee, setIsCalculatingFee] = useState(false);
 
   useEffect(() => {
     if (items.length === 0) router.push("/panier");
@@ -366,6 +367,7 @@ export default function OrderPage() {
     remarques?: string;
     email?: string;
   }) => {
+
     if (!zoneSelectionneeId) {
       toast({
         title: "Zone requise",
@@ -373,6 +375,15 @@ export default function OrderPage() {
         variant: "destructive",
       });
       return;
+    }
+
+    if (fraisLivraison === 0 && zoneSelectionneeId) {
+      toast({
+        title: "Livraison offerte",
+        description: "Les frais de livraison sont à 0 FCFA quand les achats atteignent 50 000 FCFA.",
+        variant: "default",
+      });
+      // On continue la commande normalement
     }
 
     setIsSubmitting(true);
@@ -501,13 +512,20 @@ export default function OrderPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-          <OrderForm onSubmit={handleOrderSubmit} isSubmitting={isSubmitting} />
+          <OrderForm onSubmit={handleOrderSubmit} isSubmitting={isSubmitting || isCalculatingFee} />
+          {isCalculatingFee && (
+            <div className="text-center text-purple-600 mt-4">
+              <span>Calcul des frais de livraison en cours...</span>
+            </div>
+          )}
         </div>
         <div className="lg:col-span-1">
           <CartSummary
             onDeliveryFeeChange={setFraisLivraison}
             onZoneSelect={setZoneSelectionneeId}
             selectedZoneId={zoneSelectionneeId}
+            isCalculatingFee={isCalculatingFee}
+            setIsCalculatingFee={setIsCalculatingFee}
           />
         </div>
       </div>

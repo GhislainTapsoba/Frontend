@@ -58,121 +58,157 @@ export function OrderForm({ onSubmit, isSubmitting }: OrderFormProps) {
   });
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        <h2 className="text-2xl font-semibold text-gray-800 mb-4">Vos informations</h2>
+    <div className="bg-gray-800 p-8 rounded-2xl shadow-xl">
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <h2 className="text-2xl font-semibold text-white mb-4">Vos informations</h2>
 
-        <FormField
-          control={form.control}
-          name="nom_client"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Nom complet</FormLabel>
-              <FormControl>
-                <Input placeholder="Votre nom et prénom" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="telephone"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Téléphone</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: +226 70 00 00 00" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="email"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Email (facultatif)</FormLabel>
-              <FormControl>
-                <Input placeholder="Ex: exemple@domaine.com" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <FormField
-          control={form.control}
-          name="adresse"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Adresse de livraison</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Votre adresse complète (rue, quartier)" {...field} rows={3} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
             control={form.control}
-            name="ville"
+            name="nom_client"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Ville</FormLabel>
+                <FormLabel className="text-gray-200">Nom complet</FormLabel>
                 <FormControl>
-                  <Input placeholder="Votre ville" {...field} />
+                  <Input 
+                    placeholder="Votre nom et prénom" 
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400"
+                    {...field} 
+                  />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
 
           <FormField
             control={form.control}
-            name="code_postal"
+            name="telephone"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Code postal</FormLabel>
+                <FormLabel className="text-gray-200">Téléphone</FormLabel>
                 <FormControl>
-                  <Input placeholder="Code postal" {...field} />
+                  <Input 
+                    placeholder="Ex: +226 70 00 00 00" 
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400"
+                    {...field} 
+                  />
                 </FormControl>
-                <FormMessage />
+                <FormMessage className="text-red-400" />
               </FormItem>
             )}
           />
-        </div>
 
-        <FormField
-          control={form.control}
-          name="remarques"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Remarques (facultatif)</FormLabel>
-              <FormControl>
-                <Textarea placeholder="Ex: Livraison après 18h, laisser chez le voisin..." {...field} rows={3} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-200">Email (facultatif)</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Ex: exemple@domaine.com" 
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400"
+                    {...field} 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-400" />
+              </FormItem>
+            )}
+          />
 
-        <Button type="submit" className="w-full bg-purple-600 hover:bg-purple-700" disabled={isSubmitting}>
-          {isSubmitting ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Envoi de la commande...
-            </>
-          ) : (
-            "Confirmer la commande"
-          )}
-        </Button>
-      </form>
-    </Form>
+          <FormField
+            control={form.control}
+            name="adresse"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-200">Adresse de livraison</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Votre adresse complète (rue, quartier)" 
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400 resize-none"
+                    {...field} 
+                    rows={3} 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-400" />
+              </FormItem>
+            )}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+              control={form.control}
+              name="ville"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-200">Ville</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Votre ville" 
+                      className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="code_postal"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-gray-200">Code postal</FormLabel>
+                  <FormControl>
+                    <Input 
+                      placeholder="Code postal" 
+                      className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400"
+                      {...field} 
+                    />
+                  </FormControl>
+                  <FormMessage className="text-red-400" />
+                </FormItem>
+              )}
+            />
+          </div>
+
+          <FormField
+            control={form.control}
+            name="remarques"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-200">Remarques (facultatif)</FormLabel>
+                <FormControl>
+                  <Textarea 
+                    placeholder="Ex: Livraison après 18h, laisser chez le voisin..." 
+                    className="bg-gray-700 border-gray-600 text-white placeholder:text-gray-400 focus:border-purple-400 resize-none"
+                    {...field} 
+                    rows={3} 
+                  />
+                </FormControl>
+                <FormMessage className="text-red-400" />
+              </FormItem>
+            )}
+          />
+
+          <Button 
+            type="submit" 
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold py-3 transition-all duration-200 hover:shadow-lg" 
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Envoi de la commande...
+              </>
+            ) : (
+              "Confirmer la commande"
+            )}
+          </Button>
+        </form>
+      </Form>
+    </div>
   );
 }
